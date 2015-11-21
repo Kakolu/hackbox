@@ -1,0 +1,231 @@
+<html style="overflow: -moz-scrollbars-vertical;">
+	<head>
+	<script type="text/javascript" >
+	function viewXML(what)
+	{
+			
+		var url = what.urltxt.value;
+		var xmlDoc;
+		function is_all_ws( nod )
+			{
+			  // Use ECMA-262 Edition 3 String and RegExp features
+			  return !(/[^\t\n\r ]/.test(nod.textContent));
+			}
+		function is_ignorable( nod )
+			{
+			  return ( nod.nodeType == 8) || // A comment node
+					 ( (nod.nodeType == 3) && is_all_ws(nod) ); // a text node, all ws
+			}
+		
+			if( url == "" )
+				{
+					alert("Empty URL");
+					return (null);
+				}
+ 			if (window.XMLHttpRequest)
+ 				{
+ 				// code for IE7+, Firefox, Chrome, Opera, Safari
+ 				xmlhttp=new XMLHttpRequest();
+ 				}
+			else
+ 				{
+ 				// code for IE6, IE5
+ 				xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+ 				}
+				xmlhttp.onreadystatechange=function()
+				  {
+					if (xmlhttp.readyState==4 && xmlhttp.status==200)
+					{
+						xmlDoc = xmlhttp.responseXML;
+						try
+						{
+							if (xmlDoc.parseError.errorCode != 0)
+							{
+								alert("Error in XML file");
+								return(null);
+							}
+						}
+						catch(e)
+						{
+							try
+							{
+								if (xmlDoc.documentElement.nodeName=="parsererror")
+								{
+									alert("Error in XML file");
+									return(null);
+								}
+							}
+							catch(e)
+							{
+							}
+						}
+						List = xmlDoc.documentElement.childNodes;
+						xmlFileEmpty = true;
+						for( i=0; i < List.length; i++)
+						{
+							if( !is_ignorable( List.item(i) ) )
+							{
+								xmlFileEmpty = false;
+							}
+						}
+						if( xmlFileEmpty )
+						{
+							alert("No List present");
+							return (null);
+						}
+						var myWindow = window.open("", "MsgWindow","scrollbars=1");
+						myWindow.document.write("<html><head><title>Assignment4</title></head><body>");
+						myWindow.document.write("<table border='1'>");
+						List = xmlDoc.documentElement.childNodes;//Worksheet
+						for(k=0;k<List.length;k++)
+						{
+							if(List.item(k).nodeType==1)
+							{		
+								Table = List.item(k).childNodes;//table
+								for( i=0; i < Table.length; i++)
+								{
+									if(Table.item(i).nodeType==1)
+									{
+										Row = Table.item(i).childNodes;//row
+										x=Row.length;
+										if(Row.length<=3)
+													{
+													myWindow.close();
+													alert("No company data found!");
+													}
+										myWindow.document.write("<tr><th colspan='7'>Company List</th></tr><tr>");
+										for(y=0;y<Row.length;y++)
+										{
+										
+											if(Row.item(y).nodeType==1)
+											{
+												Data = Row.item(y).childNodes;//data
+												myWindow.document.write("<tr>");
+												
+													
+													
+												for(u=0;u<Data.length;u++)
+												{
+												
+													if(Data.item(u).nodeType==1)
+													{
+													Temp = Data.item(u).nodeName;
+													
+														if( Data.item(u).nodeName == "Data" )
+														{	
+															myWindow.document.write("<th>"+Data.item(u).firstChild.nodeValue+"</th>");											
+														}
+														else 
+														{
+															if( Data.item(u).nodeName == "Symbol" )
+															{
+																if(Data.item(u).firstChild == null)
+																{
+																myWindow.document.write("<th>N.A.</th>");
+																}
+																else
+																myWindow.document.write("<td>"+Data.item(u).firstChild.nodeValue+"</td>");
+															}
+															if( Data.item(u).nodeName == "Name" )
+															{
+																if(Data.item(u).firstChild == null)
+																{
+																myWindow.document.write("<th>N.A.</th>");
+																}
+																else
+																myWindow.document.write("<td>"+Data.item(u).firstChild.nodeValue+"</td>");
+															}
+															if( Data.item(u).nodeName == "LastSale" )
+															{
+																if(Data.item(u).firstChild == null)
+																{
+																myWindow.document.write("<th>N.A.</th>");
+																}
+																else
+																myWindow.document.write("<td>"+Data.item(u).firstChild.nodeValue+"</td>");
+															}
+															if( Data.item(u).nodeName == "Sector" )
+															{
+																if(Data.item(u).firstChild == null)
+																{
+																myWindow.document.write("<th>N.A.</th>");
+																}
+																else
+																myWindow.document.write("<td>"+Data.item(u).firstChild.nodeValue+"</td>");
+															}
+															if( Data.item(u).nodeName == "Industry" )
+															{
+																if(Data.item(u).firstChild == null)
+																{
+																myWindow.document.write("<th>N.A.</th>");
+																}
+																else
+																myWindow.document.write("<td>"+Data.item(u).firstChild.nodeValue+"</td>");
+															}
+															if( Data.item(u).nodeName == "HomePage" )
+															{
+																if(Data.item(u).firstChild == null)
+																{
+																myWindow.document.write("<th>N.A.</th>");
+																}
+																else
+																myWindow.document.write("<td><a href='"+Data.item(u).firstChild.nodeValue+"'>Link to Website</a></td>");
+															}
+															if( Data.item(u).nodeName == "Logo" )
+															{
+																if(Data.item(u).firstChild == null)
+																{
+																myWindow.document.write("<th>N.A.</th>");
+																}
+																else
+																myWindow.document.write("<td><img src='"+Data.item(u).firstChild.nodeValue+"'width=\"150\" height=\"150\"></td>");
+															}
+														
+														}
+														
+													}
+												}
+												myWindow.document.write("</tr>");
+												
+											}
+											
+										}
+										myWindow.document.write("</tr>");
+									}
+								}
+							}
+						}
+						myWindow.document.write("</table>");
+						myWindow.document.close();
+					}
+					else if(xmlhttp.readyState==4 || xmlhttp.status==404)
+					{
+						alert("Invalid url");
+						return(null);
+					}
+				}
+				
+ 			xmlhttp.open("GET",url,false); //open, send, responseXML are
+ 			xmlhttp.send(); //properties of XMLHTTPRequest
+		
+    }
+	
+			
+			
+					
+		
+		
+	</script>
+	</head>
+	<body>
+		<form method="get">
+			<div align="center">
+			<p>Enter the URL for Company List XML File</p>
+			<input type="text" name="urltxt" value="">
+			<br/><br/>
+			<input type="submit" value="Submit Query" onclick="viewXML(this.form)">			
+			</div>
+		</form> 
+		<noscript>
+	</body>
+</html>
