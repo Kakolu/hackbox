@@ -1,0 +1,548 @@
+<!-- Build the HTML page with values from the call response -->
+<html>
+	<head>
+		<title>eBay Search</title>
+		
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-validator/0.4.5/css/bootstrapvalidator.min.css"/>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.13.1/jquery.validate.min.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-validator/0.4.5/js/bootstrapvalidator.min.js"></script>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<style type="text/css">
+			
+			.title {
+				position: relative;
+				width: 700px;
+				height: 100px;
+				left: 300px;}
+				.result_table{
+				border: 1px solid black;
+				border-collapse: collapse;
+			}
+			label.error {
+				display:block;
+				width:100%;
+				color: red;
+			}
+		</style>
+		<script type="text/javascript">
+			function clear_fields()
+			{				
+				document.getElementById("sort").value="BestMatch";
+				document.getElementById("list").value="5";	
+				document.getElementById("results_Tab").innerHTML="";
+				document.getElementById("newp").checked = false;	
+				document.getElementById("used").checked = false;	
+				document.getElementById("vgood").checked = false;	
+				document.getElementById("good").checked = false;	
+				document.getElementById("accept").checked = false;	
+				document.getElementById("now").checked = false;	
+				document.getElementById("auc").checked = false;	
+				document.getElementById("classified").checked = false;	
+				document.getElementById("returnp").checked = false;	
+				document.getElementById("free").checked = false;	
+				document.getElementById("exp").checked = false;					
+			}
+			
+			$(document).ready(function() {
+				$.validator.addMethod('integer', function(value, element, param) {
+					return !value || (value == parseInt(value, 10));
+				}, 'Max handling time should be a valid digit!');
+				$.validator.addMethod('greater_than_from', function(value, element, param) {
+					return (value>=0) && (value >= $('#from').val());
+				}, 'Maximum price cannot be less than minimum price or below 0!');
+				$('#contact-form').validate({
+					rules: {
+						key: "required",
+						from: {
+							required: false,
+							number: true,
+							min: 0
+						},
+						to: {
+							required: false,
+							number: true,
+							greater_than_from: true
+						},
+						days: {
+							required: false,
+							integer: true,
+							min: 1
+						}
+					},
+					messages: {
+						key: "Please enter a keyword",
+						from: {
+							number:"Price should be a valid number",
+							min:"Minimum price cannot be below 0"
+						},
+						to: {
+							number:"Price should be a valid number",
+							min:""
+							
+						},
+						days: {
+							integer: "Max handling time should be a valid digit",
+							min: "Max handling time should be greater than or equal to 1"
+						}
+					},
+					submitHandler: function(form, event) {
+						event.preventDefault();
+						submit_function(1);
+						return false;
+					}
+				});
+				
+			});		
+			
+			function submit_function( page_number )
+			{
+				if(page_number < 0)
+					return false;
+				key = document.getElementById( "key" ).value;
+				from = document.getElementById( "from" ).value;
+				to = document.getElementById( "to" ).value;
+				if(document.getElementById( "newp" ).checked == true) newp = document.getElementById( "newp" ).value;
+				else newp = 0;
+				if(document.getElementById( "used" ).checked == true) used = document.getElementById( "used" ).value;
+				else used = 0;
+				if(document.getElementById( "vgood" ).checked == true) vgood = document.getElementById( "vgood" ).value;
+				else vgood = 0;
+				if(document.getElementById( "good" ).checked == true) good = document.getElementById( "good" ).value;
+				else good = 0;
+				if(document.getElementById( "accept" ).checked == true) accept = document.getElementById( "accept" ).value;
+				else accept = 0;
+				if(document.getElementById( "now" ).checked == true) now = document.getElementById( "now" ).value;
+				else now = 0;
+				if(document.getElementById( "auc" ).checked == true) auc = document.getElementById( "auc" ).value;
+				else auc = 0;
+				if(document.getElementById( "classified" ).checked == true) classified = document.getElementById( "classified" ).value;
+				else classified = 0;
+				if(document.getElementById( "returnp" ).checked == true) returnp = document.getElementById( "returnp" ).value;
+				else returnp = 0;
+				if(document.getElementById( "free" ).checked == true) free = document.getElementById( "free" ).value;
+				else free = 0;
+				if(document.getElementById( "exp" ).checked == true) exp = document.getElementById( "exp" ).value;
+				else exp = 0;
+				days = document.getElementById( "days" ).value;
+				sort = document.getElementById( "sort" ).value;
+				list = document.getElementById( "list" ).value;
+				$.ajax({
+					url:'http://kakolu-hw8.elasticbeanstalk.com',
+					data:{
+						'key': key,
+						'from': from,
+						'to': to,
+						'newp': newp,
+						'used': used,
+						'vgood': vgood,
+						'good': good,
+						'accept': accept,
+						'now': now,
+						'auc': auc,
+						'classified': classified,
+						'returnp': returnp,
+						'free': free,
+						'exp': exp,
+						'days': days,
+						'sort': sort,
+						'list': list,
+						'pageno': page_number
+						
+					},
+					type:'POST',
+					dataType: "json",
+					success:function (output)
+					{
+						if( output.jsonValid == "false")
+						{
+							document.getElementById( "inValid" ).innerHTML = "No results found";
+							document.getElementById( "results_Tab" ).innerHTML = "";
+							return false;
+						}
+						if( output.jsonValid == "true"){
+							document.getElementById( "inValid" ).innerHTML = "";
+							var ipage = parseInt(output.itemCount[0]);//items in a page
+							var npage = parseInt(output.pageNumber[0]);//page no
+							var titems = parseInt(output.resultCount[0]); //total result items
+							
+							j=1;
+							x=1;
+							pg=titems%ipage;
+							first = ipage*(npage-1)+1;
+							last = first+ipage-1;
+							if(last>titems)
+							{
+								last = first+pg+1;
+							}
+							tab_collapse = "";
+							var table_content = "<h4 ><b>"+first+"-"+last+" items out of "+output.resultCount[0]+" eBay Results for <i>"+output.query+"</i></b></h4><table>";
+							for (var key in output)
+							{
+								if (output.hasOwnProperty(key) && key.indexOf("item") > -1 && key!="itemCount")
+								{
+									
+									
+								table_content += "<tr><td valign='top' ><a data-toggle='modal' data-target='#myModal"+(j)+"'> <img src='"+output[key].basicInfo.galleryURL[0]+"' id=\"Image\" width='100px' height='100px' style='padding:5px'/></a>"+
+									"<div class=\"modal fade\" id=\"myModal"+(j)+"\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"myModalLabel\" aria-hidden=\"true\"> <div class=\"modal-dialog\"> <div class=\"modal-content\">"+
+									"<div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"Close\"><span aria-hidden=\"true\">&times;</span></button> <h2 class=\"modal-title\" id=\"myModalLabel\"><b>"+output[key].basicInfo.title[0]+"</b></h2>"+
+									" </div><div class=\"modal-body\"><img src='"+output[key].basicInfo.pictureURLSuperSize[0]+"' class=\"img-responsive\" >"+
+									"</div></div></div></div></td><td valign='top'><a id='viewItemURL' href="+output[key].basicInfo.viewItemURL[0]+"><b><span id ='title'>"+output[key].basicInfo.title[0]+"</div></b></a><br/><div id=\"Info\"><b>Price: $"+output[key].basicInfo.convertedCurrentPrice[0]+"</b>";
+									if(!output[key].basicInfo.shippingServiceCost || !output[key].basicInfo.shippingServiceCost[0] || output[key].basicInfo.shippingServiceCost[0] <= 0 || output[key].basicInfo.shippingServiceCost[0] == "undefined" || output[key].shippingInfo.shippingType[0] == "Free")
+									table_content += "(Free Shipping)";
+									else
+									table_content += "(+$"+output[key].basicInfo.shippingServiceCost[0]+" for shipping) ";
+									table_content += "&nbsp;&nbsp;<i>Location: "+output[key].basicInfo.location[0]+"</i>&nbsp;&nbsp;</span> ";
+									if(output[key].sellerInfo.topRatedSeller[0] == "true")
+									{
+										table_content +="<img src=\"http://cs-server.usc.edu:45678/hw/hw8/itemTopRated.jpg \" width=\"20px\" height=\"20px\">";
+									}
+									tab_collapse ="<div class=\"collapse\" id=\"collapsedetail"+(j)+"\">"+
+									"<div class=\"bs-example bs-example-tabs\" role=\"tabpanel\" data-example-id=\"togglable-tabs\"><ul id=\"myTab\" class=\"nav nav-tabs\" role=\"tablist\">"+
+									"<li role=\"presentation\" class=\"active\"><a href=\"#basic"+(j)+"\" id=\"basic-tab\" role=\"tab\" data-toggle=\"tab\" aria-controls=\"basic"+(j)+"\" aria-expanded=\"true\">Basic Info</a></li>"+
+									"<li role=\"presentation\"><a href=\"#seller"+(j)+"\" role=\"tab\" id=\"seller-tab\" data-toggle=\"tab\" aria-controls=\"seller"+(j)+"\">Seller Info</a></li>"+
+									"<li role=\"presentation\"><a href=\"#shipping"+(j)+"\" role=\"tab\" id=\"shipping-tab\" data-toggle=\"tab\" aria-controls=\"shipping"+(j)+"\">Shipping Info</a></li>"+
+									"</ul><div id=\"myTabContent\" class=\"tab-content\">"+
+									"<div role=\"tabpanel\" class=\"tab-pane fade in active\" id=\"basic"+(j)+"\" aria-labelledBy=\"basic-tab\"><table width='100%'>"+
+									"<tr><td><b>Category name</b></td><td>"+output[key].basicInfo.categoryName[0]+"</td></tr>"+
+									"<tr><td><b>Condition</b></td><td>";
+									if((output[key].basicInfo.conditionDisplayName) == null)
+									tab_collapse +="NA";
+									else
+									tab_collapse +=output[key].basicInfo.conditionDisplayName[0];
+									tab_collapse +="</td></tr><tr><td><b>Buying format</b></td><td>"+output[key].basicInfo.listingType[0]+"</td></tr></table></div>"+
+									"<div role=\"tabpanel\" class=\"tab-pane fade\" id=\"seller"+(j)+"\" aria-labelledBy=\"seller-tab\"><table width='100%'>"+
+									"<tr><td><b>User name</b></td><td>"+output[key].sellerInfo.sellerUserName[0]+"</td></tr>"+
+									
+									"<tr><td><b>Feedback score</b></td><td>"+output[key].sellerInfo.feedbackScore[0]+"</td></tr>"+
+									"<tr><td><b>Positive feedback</b></td><td>"+output[key].sellerInfo.positiveFeedbackPercent[0]+"%</td></tr>"+
+									"<tr><td><b>Feedback rating</b></td><td>"+output[key].sellerInfo.feedbackRatingStar[0]+"</td></tr>"+
+									"<tr><td><b>Top rated</b></td><td>";
+									if(output[key].sellerInfo.topRatedSeller[0] == "true")
+									tab_collapse += "<span class=\"glyphicon glyphicon-ok\" style=\"color:green\"></span>";
+									else 
+									tab_collapse +="<span class=\"glyphicon glyphicon-remove\" style=\"color:red\"></span>";
+									tab_collapse +="</td></tr>"+
+									"<tr><td><b>Store</b></td><td>  ";
+									var x=output[key].sellerInfo.sellerStoreURL;
+									if(output[key].sellerInfo.sellerStoreURL === null)
+									tab_collapse += "NA";
+									else 
+									tab_collapse += "<a href='"+output[key].sellerInfo.sellerStoreURL[0]+"' >"+output[key].sellerInfo.sellerStoreName[0]+"</a>";
+									tab_collapse +="</td></tr></table ></div><div role=\"tabpanel\" class=\"tab-pane fade\" id=\"shipping"+(j)+"\" aria-labelledBy=\"shipping-tab\"><table width='100%'>"+
+									"<tr><td><b>Shipping type</b></td><td>"+output[key].shippingInfo.shippingType[0]+"</td></tr>"+
+									"<tr><td><b>Handling time</b></td><td>"+output[key].shippingInfo.handlingTime[0]+"day(s)</td></tr>"+
+									"<tr><td><b>Shipping locations</b></td><td>";
+									for(var loc in output[key].shippingInfo.shipToLocations)
+									tab_collapse += output[key].shippingInfo.shipToLocations[0]+",";
+									tab_collapse += "</td></tr><tr><td><b>Expedited shipping</b></td><td>";
+									if(output[key].shippingInfo.expeditedShipping[0] == "true")
+									tab_collapse += "<span class=\"glyphicon glyphicon-ok\" style=\"color:green\"></span>";
+									else 
+									tab_collapse +="<span class=\"glyphicon glyphicon-remove\" style=\"color:red\"></span>";
+									tab_collapse +="</td></tr><tr><td><b>Oneday shipping</b></td><td>";
+									if(output[key].shippingInfo.oneDayShippingAvailable[0] == "true")
+									tab_collapse += "<span class=\"glyphicon glyphicon-ok\" style=\"color:green\"></span>";
+									else 
+									tab_collapse +="<span class=\"glyphicon glyphicon-remove\" style=\"color:red\"></span>";
+									tab_collapse +="</td></tr><tr><td><b>Returns accepted</b></td><td>";
+									if(output[key].shippingInfo.returnsAccepted[0] == "true")
+									tab_collapse += "<span class=\"glyphicon glyphicon-ok\" style=\"color:green\"></span>";
+									else 
+									tab_collapse +="<span class=\"glyphicon glyphicon-remove\" style=\"color:red\"></span>";
+									tab_collapse +="</td></tr></table></div></div></div></div>";
+									table_content +="<a data-toggle=\"collapse\" href=\"#collapsedetail"+(j)+"\" aria-expanded=\"false\" aria-controls=\"collapsedetail"+(j)+"\">View Details</a>&nbsp;&nbsp;"+
+									"<input type='image' src='http://cs-server.usc.edu:45678/hw/hw8/fb.png' width=\"20px\" height=\"20px\"  onclick='facebook_function();'></input><br/> "+tab_collapse+"</td></tr>";	
+									j++;
+								}
+								
+							}
+							page_dis=[" "];
+							y=npage%5;
+							x=npage-y+1;
+							page_active = "paginit"+y;
+							for(s=0;s<=5;s++){
+								page_dis[s] = "paginit"+s;
+							}
+							
+							table_content += "</table>"+
+							"<ul class=\"pagination\" ><li id='paginit_prev'><a href=\"#\" onclick='submit_function("+(x-5)+")'>&laquo;</a></li><li id='paginit1'><a href=\"#\" onclick='submit_function("+(x)+")'>"+(x)+"</a></li><li id='paginit2'><a href=\"#\"onclick='submit_function("+(x+1)+")'>"+(x+1)+"</a></li><li id='paginit3'><a href=\"#\" onclick='submit_function("+(x+2)+")'>"+(x+2)+"</a></li>"+
+							"<li id='paginit4'><a href=\"#\" onclick='submit_function("+(x+3)+")'>"+(x+3)+"</a></li><li id='paginit5'><a href=\"#\" onclick='submit_function("+(x+4)+")'>"+(x+4)+"</a></li><li id='paginit_next'><a href=\"#\" onclick='submit_function("+(x+5)+")'>&raquo;</a></li></ul>"
+							if(output.resultCount[0]>0)
+							{
+								
+								document.getElementById( "results_Tab" ).innerHTML = table_content;
+								document.getElementById(page_active).className="active";
+								last_pgitem=(x+4)*ipage;
+								f=(titems%5)+1;
+								l=5;
+								if(last_pgitem>titems)
+								{
+									for(s=f;s<=l;s++)
+									{
+										document.getElementById(page_dis[s]).className="disabled";
+									}
+									document.getElementById("paginit_next").className="disabled";
+									document.getElementById(page_active).className="active";
+									
+								}
+								if(npage==1)
+								{
+									document.getElementById("paginit_prev").className="disabled";
+								}
+								else
+								document.getElementById("paginit_prev").className="";
+								
+								
+							}
+							else
+							document.getElementById( "results_Tab" ).innerHTML = "<h3><b><i>No results found!</i></b></h3>";
+						}
+						
+					},
+					error: function (output) {
+					}
+				});
+				return false;
+			}
+			
+			function statusChangeCallback(response) {
+				console.log('statusChangeCallback');
+				console.log(response);
+				if (response.status === 'connected') {
+					testAPI();
+					} else if (response.status === 'not_authorized') {
+					
+					} else {
+					
+				}
+			}
+			function check_status() {
+				FB.getLoginStatus(function(response) {
+					statusChangeCallback(response);
+				});
+			}
+			function facebook_function(){
+				FB.login(function(response){
+					check_status(); 
+				});
+			}
+			
+			window.fbAsyncInit = function() {
+				FB.init({
+					appId      : '336069729935780',
+					cookie     : true,  
+					xfbml      : true,  
+					version    : 'v2.0' 
+				});
+			};
+			
+			(function(d, s, id) {
+				var js, fjs = d.getElementsByTagName(s)[0];
+				if (d.getElementById(id)) return;
+				js = d.createElement(s); js.id = id;
+				js.src = "http://connect.facebook.net/en_US/sdk.js";
+				fjs.parentNode.insertBefore(js, fjs);
+			}(document, 'script', 'facebook-jssdk'));
+			function testAPI() {
+				console.log('Welcome!  Fetching your information.... ');
+				FB.ui({
+					method: 'feed',
+					link: document.getElementById("viewItemURL").href,
+					name: document.getElementById("title").innerHTML,
+					caption: 'Search Information from eBay.com',
+					picture: document.getElementById("Image").src,
+					description: document.getElementById("Info").innerHTML
+					}, function(response){
+					if( response.post_id )
+					{
+						alert( "Posted successfully" );
+					}
+					else
+					{
+						alert( "Not Posted" );
+					}
+				});
+			}
+			
+		</script>
+		
+	</head>
+	<body>
+		<div class="container">
+			<img src="http://cs-server.usc.edu:45678/hw/hw6/ebay.jpg" alt="ebay" width="130px" height="50px"style="vertical-align:middle;" />
+			<h2 style="display:inline-block;vertical-align:middle;">Shopping</h2>
+			<form method="post" class="form-horizontal" data-toggle="validator" id="contact-form">
+				<div class="container-fluid">
+					<div class="form-group row-fluid">
+						<div class="col-md-12 col-xs-12">
+							<div class="row-fluid">
+								<label class="col-md-2 col-xs-12 control-label">Key Words*:</label>
+								<div class="col-xs-12 col-md-7">
+									<input type="search" name="key" id="key" class="form-control"  placeholder="Enter Keyword" /> 
+								</div>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+					
+					<div class="form-group row-fluid">
+						<div class="col-md-12">
+							<div class="row-fluid">
+								<label class="col-xs-12 col-md-2 control-label">Price Range:</label>
+								<div class="col-md-7 col-xs-12" style="padding-left:0px; padding-right:0px;">
+									<div class="row-fluid">
+										<div class="col-xs-12 col-md-6"><input type="number" name="from" id="from" class="form-control" placeholder="from($)"></div>
+										<div class="col-xs-12 col-md-6"><input type="number" name="to" id="to" class="form-control" placeholder="to($)"></div>
+									</div>
+								</div>
+							</div>
+						<div class="clearfix"></div>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+
+					<div class="form-group row-fluid">
+						<div class="col-md-12">
+							<div class="row-fluid">
+								<label class="col-xs-12 col-md-2 control-label">Condition:</label>
+								<div class="checkbox col-xs-2 col-sm-3 col-md-1">
+									<label><input type="checkbox" name="newp" id="newp" value="1000">New</label>
+								</div>
+								<div class="checkbox col-xs-2 col-sm-3 col-md-1">
+									<label><input type="checkbox" name="used" id="used" value="3000">Used</label>
+								</div>
+								<div class="checkbox col-xs-4 col-sm-3 col-md-2">
+									<label><input type="checkbox" name="vgood" id="vgood" value="4000">Very Good</label> 
+								</div>
+								<div class="checkbox col-xs-2 col-sm-3 col-md-1">
+									<label><input type="checkbox" name="good" id="good" value="5000">Good</label>
+								</div>
+								<div class="checkbox col-xs-3 col-sm-3 col-md-1">
+									<label><input type="checkbox" name="accept" id="accept" value="6000" >Acceptable</label>
+								</div>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+
+					<div class="form-group row-fluid">
+						<div class="col-md-12">
+							<div class="row-fluid">
+								<label class="col-xs-12 col-md-2 control-label">Buying Formats:</label>
+								<div class="checkbox col-xs-5 col-md-2">
+									<label><input type="checkbox" name="now" id="now" value="FixedPrice">Buy It Now</label>
+								</div>
+								<div class="checkbox col-xs-2 col-md-2">
+									<label><input type="checkbox" name="auc" id="auc" value="Auction">Auction</label>
+								</div>
+								<div class="checkbox col-xs-5 col-md-2">
+									<label><input type="checkbox" name="classified" id="classified" value="Classified">Classified Ads</label>
+								</div>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+
+					<div class="form-group row-fluid">
+						<div class="col-md-12">
+							<div class="row-fluid">
+								<label class="col-xs-12 col-md-2 control-label">Seller:</label>
+								<div class="checkbox col-xs-12 col-md-4">
+									<label><input type="checkbox" name="returnp" id="returnp" value="true">Return accepted</label>
+								</div>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+
+					<div class="form-group row-fluid">
+						<div class="col-md-12">
+							<div class="row-fluid">
+								<label class="col-xs-12 col-md-2 control-label">Shipping:</label>
+								<div class="checkbox col-xs-6 col-md-2">
+									<label><input type="checkbox" name="free" id="free" value="true">Free Shipping</label>
+								</div>
+								<div class="checkbox col-xs-6 col-md-3">
+									<label><input type="checkbox" name="exp" id="exp" value="Expedited" >Expedited shipping</label>
+								</div>
+							</div>
+							<div class="clearfix"></div>
+							<div class="row-fluid">
+								<div class="col-md-offset-2 col-md-7 col-xs-12" style="padding-top:7px;">
+									<input type="number" name="days" id="days" class="form-control" placeholder="Max handling time(days)"></input>
+								</div>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+
+					<div class="form-group row-fluid">
+						<div class="col-md-12">
+							<div class="row-fluid">
+								<label class="col-md-2 col-xs-12 control-label">Sort by:</label>
+								<div class="col-md-7 col-xs-12">
+									<select class="form-control" name="sort" id="sort">
+										<option value="BestMatch" selected="selected" > Best Match </option>
+										<option value="CurrentPriceHighest"> Price: highest first </option>
+										<option value="PricePlusShippingHighest"> Price + Shipping: highest first </option>
+										<option value="PricePlusShippingLowest"> Price + Shipping: lowest first </option>
+									</select>
+								</div>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+
+					<div class="form-group row-fluid">
+						<div class="col-md-12">
+							<div class="row-fluid">
+								<label class="col-md-2 col-xs-12 control-label">Results Per Page:</label>
+								<div class="col-md-7 col-xs-12">
+									<select class="form-control" name="list" id="list">
+										<option selected="selected"> 5 </option>
+										<option> 10 </option>
+									</select>
+								</div> 
+							</div>
+							<div class="clearfix"></div>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+
+					<div class="form-group row-fluid">
+						<div class="col-md-offset-7 col-md-3">
+							<div class="row-fluid">
+								<input type="reset" class="btn btn-default" value="Clear" onclick="clear_fields();"></input>
+								<input type="submit" class="btn btn-primary" name="submit" id="submit" value="Search"></input> 
+							</div>
+							<div class="clearfix"></div>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+
+					<div class="form-group row-fluid">
+						<hr class="col-md-12" style="color:grey/>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+		</form>
+	</div>
+	<div class="container">
+		<div id="inValid" >
+		</div>
+		<div id="results_Tab" class="col-md-10">
+		</div>
+	</div>
+	<NOSCRIPT>
+	</body>
+</html>																															
