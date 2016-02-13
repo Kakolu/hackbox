@@ -1,0 +1,21 @@
+****************************************************************************************************************
+******************************************* 5 X 5 Board game ***************************************************
+****************************************************************************************************************
+
+
+This is a two player 5x5 board game:
+The motive of this game is simple. All you have to do is conqure as many squares as possible.
+
+Rules:
+Each box on the board has a place value. you can place a pon on any one of the empty squares.
+Each player takes one turn at a time and playes alternately.
+Each square has a fixed point value between 1 and 99.
+The objective of the game for each player is to score the most points, i.e. the total point
+value of all his or her occupied squares. Thus, one wants to capture the squares worth the
+most points.
+There are 2 kinds of moves:
+Raid: If you place a pon next to your own pon and also, there is the opponent's pon next to your new move, You can conqure that pon(opponent's).(Raid can be done only horizontally or vertically, but not diagonally)
+Sneak: You can place the pon on any square in a way that your opponent cannot make a Raid attack on you.
+
+
+****************************************************************************************************************
