@@ -1,6 +1,8 @@
 *********************************************
 
-Quantization, involved in image processing, is a lossy compression technique achieved by compressing a range of values to a single quantum value.
+	Quantization, involved in image processing, 
+	is a lossy compression technique achieved by 
+	compressing a range of values to a single quantum value.
 
 *********************************************
 
